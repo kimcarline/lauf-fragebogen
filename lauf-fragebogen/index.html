@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nach dem Lauf</title>
+
+<!--
+  SCHRIFTEN:
+  Lege deine beiden TTF-Dateien in einen Unterordner "fonts/" neben dieser
+  index.html, mit genau diesen Dateinamen:
+    fonts/CirrusCumulus.ttf
+    fonts/TTNormsProSerif.ttf
+  (oder passe die Pfade/Namen unten im @font-face-Block entsprechend an)
+-->
+<style>
+  @font-face {
+    font-family: "CirrusCumulus";
+    src: url("fonts/CirrusCumulus.ttf") format("truetype");
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "TT Norms Pro Serif";
+    src: url("fonts/TTNormsProSerif.ttf") format("truetype");
+    font-display: swap;
+  }
+</style>
+
+<style>
+  :root{
+    --bg: #fdfcf9;
+    --ink: #1a1a1a;
+    --line: #b9b6ae;
+    --line-light: #e3e0d8;
+    --placeholder: #9c9a94;
+  }
+
+  *{ box-sizing: border-box; }
+
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "TT Norms Pro Serif", Georgia, serif;
+    font-weight: 300;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page{
+    max-width: 460px;
+    margin: 0 auto;
+    padding: 48px 28px 96px;
+  }
+
+  .headline{
+    font-family: "CirrusCumulus", cursive;
+    font-weight: 600;
+    font-size: 64px;
+    line-height: 0.95;
+    margin: 0 0 28px;
+  }
+
+  .intro{
+    font-size: 15px;
+    margin: 0 0 44px;
+  }
+
+  section{
+    margin-bottom: 40px;
+  }
+
+  .q{
+    font-size: 16px;
+    margin: 0 0 14px;
+  }
+
+  .field-line{
+    display:flex;
+    align-items: baseline;
+    gap: 10px;
+    font-size: 16px;
+  }
+  .field-line input[type="text"]{
+    flex:1;
+    border: none;
+    border-bottom: 1px solid var(--line);
+    background: transparent;
+    font: inherit;
+    color: var(--ink);
+    padding: 2px 4px;
+    min-width: 0;
+  }
+  .field-line input[type="text"]:focus{
+    outline: none;
+    border-bottom-color: var(--ink);
+  }
+
+  /* Checkbox / Radio als Klammer-Kästchen [ ] */
+  .option{
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    font-size: 16px;
+    padding: 3px 0;
+    cursor: pointer;
+    user-select: none;
+    width: fit-content;
+  }
+  .option input{
+    position:absolute;
+    opacity:0;
+    width:1px;height:1px;
+  }
+  .bracket{
+    font-family: "TT Norms Pro Serif", Georgia, serif;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width: 20px;
+    flex-shrink:0;
+    position:relative;
+  }
+  .bracket::before{ content:"["; }
+  .bracket::after{ content:"]"; }
+  .bracket .mark{
+    position:absolute;
+    left:0; right:0;
+    text-align:center;
+    opacity:0;
+    font-size: 13px;
+    transform: translateY(-1px);
+  }
+  .option input:checked + .bracket .mark{ opacity:1; }
+  .option input:focus-visible + .bracket{ outline: 2px solid var(--ink); outline-offset:2px; }
+
+  textarea{
+    width:100%;
+    border: 1px solid var(--line-light);
+    background: transparent;
+    font: inherit;
+    font-size: 15px;
+    color: var(--ink);
+    padding: 12px 14px;
+    resize: vertical;
+    min-height: 90px;
+  }
+  textarea::placeholder{ color: var(--placeholder); }
+  textarea:focus{ outline:none; border-color: var(--line); }
+
+  .link-trigger{
+    background:none;
+    border:none;
+    padding:0;
+    font: inherit;
+    font-size: 16px;
+    color: var(--ink);
+    text-decoration: underline;
+    cursor:pointer;
+  }
+
+  .file-row, .color-row{
+    display:flex;
+    align-items:center;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+  }
+  .file-preview{
+    font-size: 13px;
+    color: var(--placeholder);
+  }
+  .thumb{
+    width: 40px; height:40px;
+    object-fit: cover;
+    border: 1px solid var(--line-light);
+  }
+  .swatch{
+    width: 22px; height: 22px;
+    border: 1px solid var(--line);
+    display:inline-block;
+    vertical-align: middle;
+  }
+
+  /* Koordinatensystem */
+  .coord-wrap{
+    margin-top: 20px;
+  }
+  .coord-label-top, .coord-label-bottom{
+    text-align:center;
+    font-size: 15px;
+    margin: 6px 0;
+  }
+  .coord-box-row{
+    display:flex;
+    align-items:center;
+    gap: 10px;
+  }
+  .coord-side{
+    font-size: 15px;
+    white-space: nowrap;
+  }
+  .coord-box{
+    position:relative;
+    flex:1;
+    aspect-ratio: 1 / 1;
+    max-height: 260px;
+    cursor: crosshair;
+    touch-action: none;
+  }
+  .coord-box svg{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+  }
+  .coord-axis{
+    stroke: var(--line);
+    stroke-width: 1;
+  }
+  .coord-dot{
+    position:absolute;
+    width:12px; height:12px;
+    margin-left:-6px; margin-top:-6px;
+    border-radius:50%;
+    background: var(--ink);
+    display:none;
+    pointer-events:none;
+  }
+  .coord-readout{
+    font-size: 13px;
+    color: var(--placeholder);
+    margin-top: 10px;
+    min-height: 18px;
+  }
+
+  .km-row{
+    display:flex;
+    align-items:baseline;
+    gap: 10px;
+    font-size:16px;
+    margin-bottom: 12px;
+  }
+  .km-row input[type="text"]{
+    width: 90px;
+    border:none;
+    border-bottom:1px solid var(--line);
+    background:transparent;
+    font:inherit;
+    color: var(--ink);
+    padding: 2px 4px;
+  }
+  .km-row input[type="text"]:focus{ outline:none; border-bottom-color: var(--ink); }
+
+  .submit-row{
+    text-align:left;
+    margin-top: 56px;
+  }
+  .submit-btn{
+    background:none;
+    border:none;
+    font: inherit;
+    font-size: 17px;
+    text-decoration: underline;
+    cursor:pointer;
+    color: var(--ink);
+    padding:0;
+  }
+  .submit-btn:disabled{
+    color: var(--placeholder);
+    cursor: default;
+  }
+
+  .status{
+    margin-top: 18px;
+    font-size: 14px;
+  }
+  .status.ok{ color:#2e6b3e; }
+  .status.err{ color:#a33; }
+
+  hr.section-rule{
+    border:none;
+    border-top: 1px solid var(--line-light);
+    margin: 40px 0;
+  }
+
+  @media (prefers-reduced-motion: no-preference){
+    .option .bracket .mark{ transition: opacity 0.1s ease; }
+  }
+</style>
+</head>
+<body>
+
+<form class="page" id="fragebogen">
+
+  <h1 class="headline">Nach dem<br>Lauf</h1>
+
+  <p class="intro">
+    Im folgenden erhältst du Fragen, die nach jedem Lauf beantwortet werden
+    sollen. Lade über den Upload Button außerdem ein Screenshot deines
+    Streckenverlaufs hoch, den du mit einer Tracking App während deines
+    Laufs aufgenommen hast. Vergiss zudem nicht jedes Mal deine zugewiesene
+    Kennnummer einzutragen.
+  </p>
+
+  <section>
+    <div class="field-line">
+      <label for="kennnummer">Kennnummer:</label>
+      <input type="text" id="kennnummer" name="kennnummer" required>
+    </div>
+  </section>
+
+  <section>
+    <p class="q">Wie bewertest du deinen heutigen Lauf insgesamt?</p>
+    <label class="option"><input type="radio" name="bewertung" value="sehr gut" required><span class="bracket"><span class="mark">✕</span></span>sehr gut</label>
+    <label class="option"><input type="radio" name="bewertung" value="gut"><span class="bracket"><span class="mark">✕</span></span>gut</label>
+    <label class="option"><input type="radio" name="bewertung" value="neutral"><span class="bracket"><span class="mark">✕</span></span>neutral</label>
+    <label class="option"><input type="radio" name="bewertung" value="schlecht"><span class="bracket"><span class="mark">✕</span></span>schlecht</label>
+    <label class="option"><input type="radio" name="bewertung" value="sehr schlecht"><span class="bracket"><span class="mark">✕</span></span>sehr schlecht</label>
+  </section>
+
+  <section>
+    <p class="q">Wie hast du dich gefühlt?</p>
+    <label class="option"><input type="checkbox" name="gefuehl" value="motiviert"><span class="bracket"><span class="mark">✕</span></span>motiviert</label>
+    <label class="option"><input type="checkbox" name="gefuehl" value="energiegeladen"><span class="bracket"><span class="mark">✕</span></span>energiegeladen</label>
+    <label class="option"><input type="checkbox" name="gefuehl" value="selbstbewusst"><span class="bracket"><span class="mark">✕</span></span>selbstbewusst</label>
+    <label class="option"><input type="checkbox" name="gefuehl" value="unmotiviert"><span class="bracket"><span class="mark">✕</span></span>unmotiviert</label>
+    <label class="option"><input type="checkbox" name="gefuehl" value="energielos"><span class="bracket"><span class="mark">✕</span></span>energielos</label>
+    <label class="option"><input type="checkbox" name="gefuehl" value="zweifelnd"><span class="bracket"><span class="mark">✕</span></span>zweifelnd</label>
+  </section>
+
+  <section>
+    <p class="q">Welche Gedanken sind dir besonders im Kopf geblieben?</p>
+    <textarea name="gedanken" placeholder="Tippe, um einzutragen."></textarea>
+  </section>
+
+  <section>
+    <p class="q">Bist du alleine oder in Gesellschaft gelaufen?</p>
+    <label class="option"><input type="radio" name="gesellschaft" value="alleine" required><span class="bracket"><span class="mark">✕</span></span>alleine</label>
+    <label class="option"><input type="radio" name="gesellschaft" value="mit anderen"><span class="bracket"><span class="mark">✕</span></span>mit anderen</label>
+  </section>
+
+  <section>
+    <p class="q">Hat das Wetter dein heutiges Training beeinflusst?</p>
+    <label class="option"><input type="radio" name="wetter" value="Ja, positiv" required><span class="bracket"><span class="mark">✕</span></span>Ja, positiv</label>
+    <label class="option"><input type="radio" name="wetter" value="Ja, negativ"><span class="bracket"><span class="mark">✕</span></span>Ja, negativ</label>
+    <label class="option"><input type="radio" name="wetter" value="Nein, neutral"><span class="bracket"><span class="mark">✕</span></span>Nein, neutral</label>
+  </section>
+
+  <section>
+    <p class="q">Wie hast du dich gefühlt? Setze dein Kreuz entsprechend im Koordinatensystem.</p>
+
+    <div class="coord-wrap">
+      <div class="coord-label-top">fokussiert</div>
+      <div class="coord-box-row">
+        <span class="coord-side">schwach</span>
+        <div class="coord-box" data-coord="fokus" data-left="schwach" data-right="stark" data-top="fokussiert" data-bottom="abgelenkt">
+          <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+            <line class="coord-axis" x1="50" y1="0" x2="50" y2="100"></line>
+            <line class="coord-axis" x1="0" y1="50" x2="100" y2="50"></line>
+          </svg>
+          <div class="coord-dot"></div>
+        </div>
+        <span class="coord-side">stark</span>
+      </div>
+      <div class="coord-label-bottom">abgelenkt</div>
+      <div class="coord-readout" data-readout="fokus"></div>
+      <input type="hidden" name="koordinate_fokus" id="koordinate_fokus">
+    </div>
+
+    <div class="coord-wrap">
+      <div class="coord-label-top">zufrieden</div>
+      <div class="coord-box-row">
+        <span class="coord-side">schwer</span>
+        <div class="coord-box" data-coord="zufrieden" data-left="schwer" data-right="leicht" data-top="zufrieden" data-bottom="frustriert">
+          <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+            <line class="coord-axis" x1="50" y1="0" x2="50" y2="100"></line>
+            <line class="coord-axis" x1="0" y1="50" x2="100" y2="50"></line>
+          </svg>
+          <div class="coord-dot"></div>
+        </div>
+        <span class="coord-side">leicht</span>
+      </div>
+      <div class="coord-label-bottom">frustriert</div>
+      <div class="coord-readout" data-readout="zufrieden"></div>
+      <input type="hidden" name="koordinate_zufrieden" id="koordinate_zufrieden">
+    </div>
+  </section>
+
+  <section>
+    <p class="q">Welche Farbe würdest du deinem Lauf auf der Gefühlsebene zuordnen?</p>
+    <div class="color-row">
+      <button type="button" class="link-trigger" id="farbe-trigger">auswählen</button>
+      <span class="swatch" id="farbe-swatch" style="background:transparent;"></span>
+      <input type="color" id="farbe-input" name="farbe" style="position:absolute; width:1px; height:1px; opacity:0;">
+    </div>
+  </section>
+
+  <section>
+    <p class="q">Lade jetzt deinen Streckenverlauf hoch.</p>
+    <div class="file-row">
+      <button type="button" class="link-trigger" id="foto-trigger">auswählen</button>
+      <span class="file-preview" id="foto-preview"></span>
+      <input type="file" id="foto-input" name="foto" accept="image/*" capture="environment" style="position:absolute; width:1px; height:1px; opacity:0;">
+    </div>
+  </section>
+
+  <section>
+    <p class="q">
+      Bezugnehmend auf deinen heutigen Streckenverlauf. Bei welchem Kilometer
+      hast du deinen Höhepunkt und deinen Tiefpunkt verspürt.
+    </p>
+    <div class="km-row">
+      <label for="hoehepunkt">Höhepunkt:</label>
+      <input type="text" id="hoehepunkt" name="hoehepunkt" inputmode="decimal" placeholder="km">
+    </div>
+    <div class="km-row">
+      <label for="tiefpunkt">Tiefpunkt:</label>
+      <input type="text" id="tiefpunkt" name="tiefpunkt" inputmode="decimal" placeholder="km">
+    </div>
+  </section>
+
+  <section>
+    <p class="q">Warum genau da?</p>
+    <textarea name="warum" placeholder="Tippe, um einzutragen."></textarea>
+  </section>
+
+  <section>
+    <p class="q">Sonstige Anmerkungen.</p>
+    <textarea name="anmerkungen" placeholder="Tippe, um einzutragen."></textarea>
+  </section>
+
+  <div class="submit-row">
+    <button type="submit" class="submit-btn" id="submit-btn">absenden</button>
+    <div class="status" id="status"></div>
+  </div>
+
+</form>
+
+<script>
+  /* ---------- Koordinatensysteme ---------- */
+  document.querySelectorAll(".coord-box").forEach(box => {
+    const dot = box.querySelector(".coord-dot");
+    const key = box.dataset.coord;
+    const readout = document.querySelector(`[data-readout="${key}"]`);
+    const hidden = document.getElementById(`koordinate_${key}`);
+
+    function place(clientX, clientY){
+      const rect = box.getBoundingClientRect();
+      let x = (clientX - rect.left) / rect.width;
+      let y = (clientY - rect.top) / rect.height;
+      x = Math.min(1, Math.max(0, x));
+      y = Math.min(1, Math.max(0, y));
+
+      dot.style.display = "block";
+      dot.style.left = (x * 100) + "%";
+      dot.style.top = (y * 100) + "%";
+
+      const hSide = x < 0.5 ? box.dataset.left : box.dataset.right;
+      const hPct = Math.round(Math.abs(x - 0.5) * 200);
+      const vSide = y < 0.5 ? box.dataset.top : box.dataset.bottom;
+      const vPct = Math.round(Math.abs(y - 0.5) * 200);
+
+      const text = `${hSide} (${hPct}%), ${vSide} (${vPct}%)`;
+      readout.textContent = text;
+      hidden.value = text;
+    }
+
+    box.addEventListener("click", e => place(e.clientX, e.clientY));
+    box.addEventListener("touchstart", e => {
+      const t = e.touches[0];
+      place(t.clientX, t.clientY);
+    }, {passive:true});
+  });
+
+  /* ---------- Farbauswahl ---------- */
+  const farbeTrigger = document.getElementById("farbe-trigger");
+  const farbeInput = document.getElementById("farbe-input");
+  const farbeSwatch = document.getElementById("farbe-swatch");
+  farbeTrigger.addEventListener("click", () => farbeInput.click());
+  farbeInput.addEventListener("input", () => {
+    farbeSwatch.style.background = farbeInput.value;
+    farbeTrigger.textContent = farbeInput.value;
+  });
+
+  /* ---------- Foto-Upload ---------- */
+  const fotoTrigger = document.getElementById("foto-trigger");
+  const fotoInput = document.getElementById("foto-input");
+  const fotoPreview = document.getElementById("foto-preview");
+  let fotoBase64 = "";
+
+  fotoTrigger.addEventListener("click", () => fotoInput.click());
+  fotoInput.addEventListener("change", () => {
+    const file = fotoInput.files[0];
+    if(!file) return;
+    fotoPreview.textContent = file.name;
+    const reader = new FileReader();
+    reader.onload = () => { fotoBase64 = reader.result; };
+    reader.readAsDataURL(file);
+  });
+
+  /* ---------- Absenden ---------- */
+  const form = document.getElementById("fragebogen");
+  const submitBtn = document.getElementById("submit-btn");
+  const status = document.getElementById("status");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    status.textContent = "";
+    status.className = "status";
+
+    const data = new FormData(form);
+    const gefuehl = data.getAll("gefuehl").join(", ");
+
+    const summary = `
+Kennnummer: ${data.get("kennnummer")}
+Bewertung: ${data.get("bewertung")}
+Gefühl(e): ${gefuehl}
+Gedanken: ${data.get("gedanken")}
+Alleine/Gesellschaft: ${data.get("gesellschaft")}
+Wetter-Einfluss: ${data.get("wetter")}
+Koordinate (fokussiert/stark): ${data.get("koordinate_fokus")}
+Koordinate (zufrieden/leicht): ${data.get("koordinate_zufrieden")}
+Farbe: ${data.get("farbe")}
+Höhepunkt: ${data.get("hoehepunkt")} km
+Tiefpunkt: ${data.get("tiefpunkt")} km
+Warum: ${data.get("warum")}
+Sonstige Anmerkungen: ${data.get("anmerkungen")}
+    `.trim();
+
+    const payload = {
+      kennnummer: data.get("kennnummer"),
+      bewertung: data.get("bewertung"),
+      gefuehl: gefuehl,
+      gedanken: data.get("gedanken"),
+      gesellschaft: data.get("gesellschaft"),
+      wetter: data.get("wetter"),
+      koordinate_fokus: data.get("koordinate_fokus"),
+      koordinate_zufrieden: data.get("koordinate_zufrieden"),
+      farbe: data.get("farbe"),
+      hoehepunkt: data.get("hoehepunkt"),
+      tiefpunkt: data.get("tiefpunkt"),
+      warum: data.get("warum"),
+      anmerkungen: data.get("anmerkungen"),
+      zusammenfassung: summary,
+      foto_base64: fotoBase64 || null,
+      foto_dateiname: fotoInput.files[0] ? fotoInput.files[0].name : null
+    };
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = "wird gesendet …";
+
+    try{
+      const res = await fetch("/.netlify/functions/send-mail", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if(!res.ok){
+        throw new Error("Server antwortete mit Status " + res.status);
+      }
+
+      status.textContent = "Danke! Deine Antworten wurden versendet.";
+      status.classList.add("ok");
+      form.reset();
+      document.querySelectorAll(".coord-dot").forEach(d => d.style.display = "none");
+      document.querySelectorAll(".coord-readout").forEach(r => r.textContent = "");
+      farbeSwatch.style.background = "transparent";
+      farbeTrigger.textContent = "auswählen";
+      fotoPreview.textContent = "";
+      fotoBase64 = "";
+    }catch(err){
+      console.error(err);
+      status.textContent = "Senden fehlgeschlagen. Bitte versuche es erneut.";
+      status.classList.add("err");
+    }finally{
+      submitBtn.disabled = false;
+      submitBtn.textContent = "absenden";
+    }
+  });
+</script>
+
+</body>
+</html>
