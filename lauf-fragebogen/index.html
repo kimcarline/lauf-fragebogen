@@ -158,6 +158,21 @@
     text-decoration: underline;
     cursor:pointer;
   }
+  .trigger-label{
+    display:inline-block;
+    cursor:pointer;
+  }
+  /* Die echten Inputs bleiben technisch vorhanden und klickbar,
+     sind aber optisch unsichtbar - das Label übernimmt die Optik.
+     Wichtig: kein display:none, sonst funktioniert das Öffnen auf
+     manchen mobilen Browsern nicht zuverlässig. */
+  #farbe-input, #foto-input{
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    overflow: hidden;
+  }
 
   .file-row, .color-row{
     display:flex;
@@ -390,18 +405,22 @@
   <section>
     <p class="q">Welche Farbe würdest du deinem Lauf auf der Gefühlsebene zuordnen?</p>
     <div class="color-row">
-      <button type="button" class="link-trigger" id="farbe-trigger">auswählen</button>
+      <label class="trigger-label" for="farbe-input">
+        <span class="link-trigger" id="farbe-trigger">auswählen</span>
+      </label>
       <span class="swatch" id="farbe-swatch" style="background:transparent;"></span>
-      <input type="color" id="farbe-input" name="farbe" style="position:absolute; width:1px; height:1px; opacity:0;">
+      <input type="color" id="farbe-input" name="farbe">
     </div>
   </section>
 
   <section>
     <p class="q">Lade jetzt deinen Streckenverlauf hoch.</p>
     <div class="file-row">
-      <button type="button" class="link-trigger" id="foto-trigger">auswählen</button>
+      <label class="trigger-label" for="foto-input">
+        <span class="link-trigger" id="foto-trigger">auswählen</span>
+      </label>
       <span class="file-preview" id="foto-preview"></span>
-      <input type="file" id="foto-input" name="foto" accept="image/*" capture="environment" style="position:absolute; width:1px; height:1px; opacity:0;">
+      <input type="file" id="foto-input" name="foto" accept="image/*">
     </div>
   </section>
 
@@ -474,22 +493,19 @@
   });
 
   /* ---------- Farbauswahl ---------- */
-  const farbeTrigger = document.getElementById("farbe-trigger");
   const farbeInput = document.getElementById("farbe-input");
   const farbeSwatch = document.getElementById("farbe-swatch");
-  farbeTrigger.addEventListener("click", () => farbeInput.click());
+  const farbeTrigger = document.getElementById("farbe-trigger");
   farbeInput.addEventListener("input", () => {
     farbeSwatch.style.background = farbeInput.value;
     farbeTrigger.textContent = farbeInput.value;
   });
 
   /* ---------- Foto-Upload ---------- */
-  const fotoTrigger = document.getElementById("foto-trigger");
   const fotoInput = document.getElementById("foto-input");
   const fotoPreview = document.getElementById("foto-preview");
   let fotoBase64 = "";
 
-  fotoTrigger.addEventListener("click", () => fotoInput.click());
   fotoInput.addEventListener("change", () => {
     const file = fotoInput.files[0];
     if(!file) return;
